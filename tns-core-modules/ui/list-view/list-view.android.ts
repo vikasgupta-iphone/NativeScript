@@ -290,6 +290,11 @@ function ensureListViewAdapterClass() {
 
 export class ListViewStyler implements Styler {
     // separator-color
+    private static getSeparatorColorProperty(view: viewModule.View): any {
+        let listView = <android.widget.ListView>view._nativeView;
+        return listView.getDivider();
+    }
+
     private static setSeparatorColorProperty(view: viewModule.View, newValue: any) {
         let listView = <android.widget.ListView>view._nativeView;
         listView.setDivider(new android.graphics.drawable.ColorDrawable(newValue));
@@ -299,13 +304,13 @@ export class ListViewStyler implements Styler {
     private static resetSeparatorColorProperty(view: viewModule.View, nativeValue: any) {
         let listView = <android.widget.ListView>view._nativeView;
         listView.setDivider(new android.graphics.drawable.ColorDrawable(nativeValue));
-        listView.setDividerHeight(1);
     }
 
     public static registerHandlers() {
         registerHandler(separatorColorProperty, new StylePropertyChangedHandler(
             ListViewStyler.setSeparatorColorProperty,
-            ListViewStyler.resetSeparatorColorProperty), "ListView");
+            ListViewStyler.resetSeparatorColorProperty,
+            ListViewStyler.getSeparatorColorProperty), "ListView");
     }
 }
 
