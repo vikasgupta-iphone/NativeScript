@@ -474,7 +474,7 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
         this._initNativeView();
 
         if (this.parent) {
-            this.parent._addViewToNativeVisualTree(this, atIndex);
+            this._isAddedToNativeVisualTree = this.parent._addViewToNativeVisualTree(this, atIndex);
         }
 
         if (this.nativeView) {
