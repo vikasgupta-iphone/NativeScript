@@ -104,7 +104,7 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
     public bindingContext: any;
     public nativeView: any;
     public parent: ViewBase;
-    public isCollapsed;
+    public isCollapsed = false;
 
     public id: string;
     public className: string;

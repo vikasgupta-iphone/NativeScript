@@ -1,15 +1,16 @@
 ﻿import * as TKUnit from "../../TKUnit";
-import { View, eachDescendant, getViewById } from "ui/core/view";
+import { View, eachDescendant, getViewById, InheritedProperty, Property } from "ui/core/view";
 import { topmost } from "ui/frame";
 import { Page } from "ui/page";
 import { Button } from "ui/button";
 import { Label } from "ui/label";
 import { Color } from "color";
 import { Layout } from "ui/layouts/layout";
+import { StackLayout } from "ui/layouts/stack-layout";
 import { AbsoluteLayout } from "ui/layouts/absolute-layout";
 import * as types from "utils/types";
 import * as helper from "../../ui/helper";
-import * as dependencyObservable from "ui/core/dependency-observable";
+// import * as dependencyObservable from "ui/core/dependency-observable";
 import * as proxy from "ui/core/proxy";
 import * as observable from "data/observable";
 import * as bindable from "ui/core/bindable";
@@ -205,7 +206,7 @@ export const test_addView_WillThrow_IfView_IsAlreadyAdded = function () {
 };
 
 export const test_addToNativeVisualTree_WillThrow_IfView_IsAlreadyAdded = function () {
-    const test = function (views: Array<View>) {
+    const test = function (views: [Page, StackLayout, View, View]) {
         const newButton = new Button();
         views[1]._addView(newButton);
 
@@ -224,17 +225,15 @@ export const test_addToNativeVisualTree_WillThrow_IfView_IsAlreadyAdded = functi
 };
 
 export const test_InheritableStyleProperties_AreInherited = function () {
-    const test = function (views: Array<View>) {
+    helper.do_PageTest_WithStackLayout_AndButton((views) => {
         const redColor = new Color("red");
         views[0].style.color = redColor;
 
         const newButton = new Button();
-        views[1]._addView(newButton);
+        views[1].addChild(newButton);
 
-        TKUnit.assert(newButton.style.color === redColor);
-    };
-
-    helper.do_PageTest_WithStackLayout_AndButton(test);
+        TKUnit.assertEqual(newButton.style.color, redColor, "Color should be inherited");
+    });
 };
 
 export class TestButton extends Button {
@@ -252,73 +251,35 @@ export const test_InheritableStylePropertiesWhenUsedWithExtendedClass_AreInherit
     TKUnit.assertEqual(newButton.style.color, redColor);
 };
 
-const inheritanceTestDefaultValue = 42;
-
-const inheritanceTestProperty = new dependencyObservable.Property(
-    "inheritanceTest",
-    "TestView",
-    new proxy.PropertyMetadata(inheritanceTestDefaultValue, dependencyObservable.PropertyMetadataSettings.Inheritable)
-);
-
-const booleanInheritanceTestDefaultValue = true;
-
-const booleanInheritanceTestProperty = new dependencyObservable.Property(
-    "booleanInheritanceTest",
-    "TestView",
-    new proxy.PropertyMetadata(booleanInheritanceTestDefaultValue, dependencyObservable.PropertyMetadataSettings.Inheritable)
-);
-
-const dummyProperty = new dependencyObservable.Property(
-    "dummy",
-    "TestView",
-    new proxy.PropertyMetadata(0)
-);
-
 class TestView extends Layout {
 
-    constructor(name: string) {
+    constructor(public name: string) {
         super();
-        this._tralala = name;
     }
 
-    private _tralala: string;
-
-    get tralala(): string {
-        return this._tralala;
-    }
-    set tralala(value: string) {
-        this._tralala = value;
-    }
-
-    get inheritanceTest(): number {
-        return this._getValue(inheritanceTestProperty);
-    }
-    set inheritanceTest(value: number) {
-        this._setValue(inheritanceTestProperty, value);
-    }
-
-    get booleanInheritanceTest(): boolean {
-        return this._getValue(booleanInheritanceTestProperty);
-    }
-    set booleanInheritanceTest(value: boolean) {
-        this._setValue(booleanInheritanceTestProperty, value);
-    }
-
-    get dummy(): number {
-        return this._getValue(dummyProperty);
-    }
-    set dummy(value: number) {
-        this._setValue(dummyProperty, value);
-    }
+    public inheritanceTest: number;
+    public booleanInheritanceTest: boolean;
+    public dummy: number;
 
     public toString() {
-        return super.toString() + "." + this.tralala;
+        return super.toString() + "." + this.name;
     }
 
     public onMeasure(widthMeasureSpec: number, heightMeasureSpec: number): void {
         this.setMeasuredDimension(100, 100);
     }
 }
+
+const inheritanceTestDefaultValue = 42;
+const inheritanceTestProperty = new InheritedProperty<TestView, number>({ name: "inheritanceTest", defaultValue: inheritanceTestDefaultValue });
+inheritanceTestProperty.register(TestView);
+
+const booleanInheritanceTestDefaultValue = true;
+const booleanInheritanceTestProperty = new InheritedProperty<TestView, boolean>({ name: "booleanInheritanceTest", defaultValue: booleanInheritanceTestDefaultValue });
+booleanInheritanceTestProperty.register(TestView);
+
+const dummyProperty = new InheritedProperty<TestView, number>({ name: "dummy", defaultValue: 0 });
+dummyProperty.register(TestView);
 
 export const test_InheritableProperties_getValuesFromParent = function () {
     const testValue = 35;
@@ -509,7 +470,7 @@ export const test_binding_marginBottom = function () {
 };
 
 export const test_binding_visibility = function () {
-    property_binding_test("visibility", "collapsed", "visible");
+    property_binding_test("visibility", "collapse", "visible");
 };
 
 export const test_binding_isEnabled = function () {
@@ -613,7 +574,7 @@ export const test_binding_style_verticalAlignment = function () {
 };
 
 export const test_binding_style_visibility = function () {
-    property_binding_style_test("visibility", "collapsed", "visible");
+    property_binding_style_test("visibility", "collapse", "visible");
 };
 
 export const test_binding_style_opacity = function () {
@@ -636,10 +597,6 @@ export const testIsVisible = function () {
     helper.buildUIAndRunTest(lbl, function (views: Array<View>) {
         TKUnit.assertEqual(lbl.visibility, "visible");
         TKUnit.assertEqual(lbl.isCollapsed, false);
-
-        lbl.visibility = "collapse";
-        TKUnit.assertEqual(lbl.visibility, "collapse");
-        TKUnit.assertEqual(lbl.isCollapsed, true);
 
         lbl.visibility = "collapse";
         TKUnit.assertEqual(lbl.visibility, "collapse");
