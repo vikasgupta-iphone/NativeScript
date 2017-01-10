@@ -8,6 +8,7 @@ import { Color } from "color";
 import { Layout } from "ui/layouts/layout";
 import { StackLayout } from "ui/layouts/stack-layout";
 import { AbsoluteLayout } from "ui/layouts/absolute-layout";
+import * as utils from "utils/utils";
 import * as types from "utils/types";
 import * as helper from "../../ui/helper";
 // import * as dependencyObservable from "ui/core/dependency-observable";
@@ -526,7 +527,7 @@ export const test_binding_style_minHeight = function () {
 };
 
 export const test_binding_style_margin = function () {
-    property_binding_style_test("margin", "1 1 1 1", "2 2 2 2");
+    property_binding_style_test("margin", "1dip 2dip 3dip 4dip", "2dip 3dip 2dip 3dip");
 };
 
 export const test_binding_style_marginLeft = function () {
@@ -546,7 +547,7 @@ export const test_binding_style_marginBottom = function () {
 };
 
 export const test_binding_style_padding = function () {
-    property_binding_style_test("padding", "1 1 1 1", "2 2 2 2");
+    property_binding_style_test("padding", "1dip 2dip 3dip 4dip", "2dip 3dip 2dip 3dip");
 };
 
 export const test_binding_style_paddingLeft = function () {
@@ -620,32 +621,32 @@ export const testSetInlineStyle = function () {
 
 export const testBorderWidth = function () {
     helper.buildUIAndRunTest(_createLabelWithBorder(), function (views: Array<View>) {
-        const lbl = <Label>views[0];
-        const expectedValue = lbl.borderWidth;
+        const lbl = views[0];
+        const expectedValue = <number>lbl.borderWidth * utils.layout.getDisplayDensity();
         const actualValue = definition.getUniformNativeBorderWidth(lbl);
-        TKUnit.assertEqual(actualValue, expectedValue);
+        TKUnit.assertAreClose(actualValue, expectedValue, 0.01, "borderWidth");
     });
 };
 
 export const testCornerRadius = function () {
     helper.buildUIAndRunTest(_createLabelWithBorder(), function (views: Array<View>) {
-        const lbl = <Label>views[0];
-        const expectedValue = lbl.borderRadius;
+        const lbl = views[0];
+        const expectedValue =  <number>lbl.borderRadius * utils.layout.getDisplayDensity();
         const actualValue = definition.getUniformNativeCornerRadius(lbl);
-        TKUnit.assertEqual(actualValue, expectedValue);
+        TKUnit.assertAreClose(actualValue, expectedValue, 0.01, "borderRadius");
     });
 };
 
 export const testBorderColor = function () {
     helper.buildUIAndRunTest(_createLabelWithBorder(), function (views: Array<View>) {
-        const lbl = <Label>views[0];
+        const lbl = views[0];
         TKUnit.assertEqual(definition.checkUniformNativeBorderColor(lbl), true, "BorderColor not applied correctly!");
     });
 };
 
 export const testBackgroundColor = function () {
     helper.buildUIAndRunTest(_createLabelWithBorder(), function (views: Array<View>) {
-        const lbl = <Label>views[0];
+        const lbl = views[0];
         TKUnit.assertEqual(definition.checkNativeBackgroundColor(lbl), true, "BackgroundColor not applied correctly!");
     });
 };
