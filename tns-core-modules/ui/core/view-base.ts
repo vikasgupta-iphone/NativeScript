@@ -465,7 +465,17 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
     }
 
     public _setupUI(context: android.content.Context, atIndex?: number) {
+        traceNotifyEvent(this, "_setupUI");
+        if (traceEnabled) {
+            traceWrite(`${this}._setupUI(${context})`, traceCategories.VisualTreeEvents);
+        }
+
+        if (!isIOS && this._context === context) {
+            return;
+        }
+
         this._context = context;
+        traceNotifyEvent(this, "_onContextChanged");
 
         // TODO: refactor createUI to return native view
         this._createNativeView();
@@ -485,13 +495,13 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
             child._setupUI(context);
             return true;
         });
-
-        // if (traceEnabled) {
-        //     traceNotifyEvent(this, "_onAttached");
-        // }
     }
 
     public _tearDownUI(force?: boolean) {
+        if (traceEnabled) {
+            traceWrite(`${this}._tearDownUI(${force})`, traceCategories.VisualTreeEvents);
+        }
+
         this.eachChild((child) => {
             child._tearDownUI(force);
             return true;
@@ -511,6 +521,8 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
         this._disposeNativeView();
 
         this._context = null;
+        traceNotifyEvent(this, "_onContextChanged");
+        traceNotifyEvent(this, "_tearDownUI");
     }
 
     _childIndexToNativeChildIndex(index?: number): number {
@@ -532,6 +544,7 @@ export class ViewBase extends Observable implements ViewBaseDefinition {
      * Method is intended to be overridden by inheritors and used as "protected"
      */
     public _removeViewFromNativeVisualTree(view: ViewBase) {
+        traceNotifyEvent(view, "_removeViewFromNativeVisualTree");
         view._isAddedToNativeVisualTree = false;
     }
 

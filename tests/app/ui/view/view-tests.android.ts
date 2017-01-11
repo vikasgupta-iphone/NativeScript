@@ -14,17 +14,17 @@ trace.enable();
 
 global.moduleMerge(commonTests, exports);
 
-export const test_event_onAttached_IsRaised = function () {
-    const listener = new Listener("_onAttached");
+export const test_event_setupUI_IsRaised = function () {
+    const listener = new Listener("_setupUI");
     trace.addEventListener(listener);
 
     const test = function (views: Array<view.View>) {
-        // 2 onAttached calls: stack, button
-        TKUnit.assertEqual(listener.receivedEvents.length, 2, "onAttached calls");
+        // 2 setupUI calls: stack, button
+        TKUnit.assertEqual(listener.receivedEvents.length, 2, "setupUI calls");
 
         for (let i = 0; i < listener.receivedEvents.length; i++) {
             TKUnit.assertEqual(listener.receivedEvents[i].sender, views[i + 1]); // 0 is Page, so start with +1.
-            TKUnit.assertEqual(listener.receivedEvents[i].name, "_onAttached");
+            TKUnit.assertEqual(listener.receivedEvents[i].name, "_setupUI");
         }
     };
 
@@ -32,17 +32,17 @@ export const test_event_onAttached_IsRaised = function () {
     trace.removeEventListener(listener);
 };
 
-export const test_event_onAttached_IsRaised_WhenAttached_Dynamically = function () {
+export const test_event_setupUI_IsRaised_WhenAttached_Dynamically = function () {
     const test = function (views: Array<view.View>) {
-        // add new button to the visual tree and ensure its _onAttached event
-        const listener = new Listener("_onAttached");
+        // add new button to the visual tree and ensure its _setupUI event
+        const listener = new Listener("_setupUI");
         trace.addEventListener(listener);
 
         const newButton = new button.Button();
         (<stack.StackLayout>views[1]).addChild(newButton);
 
         TKUnit.assertEqual(listener.receivedEvents.length, 1);
-        TKUnit.assertEqual(listener.receivedEvents[0].name, "_onAttached");
+        TKUnit.assertEqual(listener.receivedEvents[0].name, "_setupUI");
         TKUnit.assertEqual(listener.receivedEvents[0].sender, newButton);
 
         trace.removeEventListener(listener);
@@ -88,7 +88,7 @@ export const test_event_onContextChanged_IsRaised_WhenAttached_Dynamically = fun
     helper.do_PageTest_WithStackLayout_AndButton(test);
 };
 
-export const test_event_onDetached_IsRaised = function () {
+export const test_event_tearDownUI_IsRaised = function () {
     let cachedViews: Array<view.View>;
     let listener: Listener;
 
@@ -96,39 +96,39 @@ export const test_event_onDetached_IsRaised = function () {
         cachedViews = views;
 
         // once the above method completes goBack on the current frame is called which will detach the tested views
-        listener = new Listener("_onDetached");
+        listener = new Listener("_tearDownUI");
         trace.addEventListener(listener);
     };
 
     helper.do_PageTest_WithStackLayout_AndButton(test);
 
     // 2 detached calls: page, stack, button, actionBar
-    TKUnit.assertEqual(listener.receivedEvents.length, 2, "onDetached calls");
+    TKUnit.assertEqual(listener.receivedEvents.length, 2, "tearDownUI calls");
 
-    // _onDetached event is propagated to nested children first
+    // _tearDownUI event is propagated to nested children first
     for (let i = 0, j = listener.receivedEvents.length - 1; i < listener.receivedEvents.length; i++ , j--) {
         // check the sender and remove
         const index = cachedViews.indexOf(<view.View>listener.receivedEvents[i].sender);
-        TKUnit.assert(index >= 0, "_onDetached called for unknown sender");
+        TKUnit.assert(index >= 0, "_tearDownUI called for unknown sender");
         cachedViews.splice(index, 1);
 
-        TKUnit.assertEqual(listener.receivedEvents[i].name, "_onDetached");
+        TKUnit.assertEqual(listener.receivedEvents[i].name, "_tearDownUI");
     }
 
     trace.removeEventListener(listener);
 };
 
-export const test_event_onDetached_IsRaised_WhenRemoved_Dynamically = function () {
+export const test_event_tearDownUI_IsRaised_WhenRemoved_Dynamically = function () {
     const test = function (views: Array<view.View>) {
-        // add new button to the visual tree and ensure its _onContextChanged event
-        const listener = new Listener("_onDetached");
+        // add new button to the visual tree and ensure its _tearDownUI event
+        const listener = new Listener("_tearDownUI");
         trace.addEventListener(listener);
 
         // remove the button from the layout
         (<stack.StackLayout>views[1]).removeChild(views[2]);
 
         TKUnit.assertEqual(listener.receivedEvents.length, 1);
-        TKUnit.assertEqual(listener.receivedEvents[0].name, "_onDetached");
+        TKUnit.assertEqual(listener.receivedEvents[0].name, "_tearDownUI");
         TKUnit.assertEqual(listener.receivedEvents[0].sender, views[2]);
 
         trace.removeEventListener(listener);
@@ -137,9 +137,9 @@ export const test_event_onDetached_IsRaised_WhenRemoved_Dynamically = function (
     helper.do_PageTest_WithStackLayout_AndButton(test);
 };
 
-export const test_events_onDetachedAndRemovedFromNativeVisualTree_AreRaised_WhenNavigateBack = function () {
-    let onDetachedListener = new Listener("_onDetached");
-    let removeFromNativeVisualTreeListener = new Listener("childInLayoutRemovedFromNativeVisualTree");
+export const test_events_tearDownUIAndRemovedFromNativeVisualTree_AreRaised_WhenNavigateBack = function () {
+    let tearDownUIListener = new Listener("_tearDownUI");
+    let removeFromNativeVisualTreeListener = new Listener("_removeViewFromNativeVisualTree");
 
     let page = frame.topmost().currentPage;
     let stackLayout = new stack.StackLayout();
@@ -147,28 +147,28 @@ export const test_events_onDetachedAndRemovedFromNativeVisualTree_AreRaised_When
     stackLayout.addChild(btn);
     page.content = stackLayout;
 
-    trace.addEventListener(onDetachedListener);
+    trace.addEventListener(tearDownUIListener);
     trace.addEventListener(removeFromNativeVisualTreeListener);
 
     page.content = null;
 
-    // 2 onDetached calls: stack, button
-    TKUnit.assertEqual(onDetachedListener.receivedEvents.length, 2, "onDetached calls");
+    // 2 tearDownUI calls: stack, button
+    TKUnit.assertEqual(tearDownUIListener.receivedEvents.length, 2, "tearDownUI calls");
 
-    TKUnit.assertEqual(onDetachedListener.receivedEvents[0].name, "_onDetached");
-    TKUnit.assertEqual(onDetachedListener.receivedEvents[0].sender, btn); // Button
-    TKUnit.assertEqual(onDetachedListener.receivedEvents[1].sender, stackLayout); // stackLayout
+    TKUnit.assertEqual(tearDownUIListener.receivedEvents[0].name, "_tearDownUI");
+    TKUnit.assertEqual(tearDownUIListener.receivedEvents[0].sender, btn); // Button
+    TKUnit.assertEqual(tearDownUIListener.receivedEvents[1].sender, stackLayout); // stackLayout
 
     // this is an event fired from CustomLayoutView when a child is removed from the native visual tree
     // therefore this event is fired for StackLayout and Button (which is inside StackLayout).
     TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents.length, 2);
-    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[0].name, "childInLayoutRemovedFromNativeVisualTree");
-    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[0].sender, stackLayout);
+    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[0].name, "_removeViewFromNativeVisualTree");
+    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[0].sender, btn);
 
-    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[1].name, "childInLayoutRemovedFromNativeVisualTree");
-    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[1].sender, btn);
+    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[1].name, "_removeViewFromNativeVisualTree");
+    TKUnit.assertEqual(removeFromNativeVisualTreeListener.receivedEvents[1].sender, stackLayout);
 
-    trace.removeEventListener(onDetachedListener);
+    trace.removeEventListener(tearDownUIListener);
     trace.removeEventListener(removeFromNativeVisualTreeListener);
 };
 
@@ -204,7 +204,6 @@ export const test_event_onContextChanged_IsNotRaised_WhenAttachedToSameContext =
         const listener = new Listener("_onContextChanged");
         trace.addEventListener(listener);
 
-        // views[2]._onContextChanged(views[0]._context);
         views[2]._setupUI(views[0]._context);
 
         TKUnit.assertEqual(listener.receivedEvents.length, 0, "listener.receivedEvents.length");
